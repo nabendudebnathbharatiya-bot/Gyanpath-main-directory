@@ -1,0 +1,22 @@
+[
+  {
+    "id": "01",
+    "name": "সামবেদ সঙ্গীত",
+    "tagline": "বৈদিক সুরের এক অপূর্ব মূর্ছনা",
+    "image": "assets/img/samaveda.jpg",
+    "link": "common/ad_bridge.html?target=https://nabendudebnathbharatiya-bot.github.io/chakradhamlandingpage/",
+    "category": "বেদ কথা",
+    "sub_category": "সামবেদ কথা",
+    "tags": ["বেদ", "সঙ্গীত", "আধ্যাত্মিক"]
+  },
+  {
+    "id": "02",
+    "name": "সামবেদ গান",
+    "tagline": "বৈদিক সুরের এক অপূর্ব মূর্ছনা",
+    "image": "assets/img/samaveda.jpg",
+    "link": "common/ad_bridge.html?target=https://nabendudebnathbharatiya-bot.github.io/chakradhamlandingpage/",
+    "category": "বেদ কথা",
+    "sub_category": "সামবেদ কথা",
+    "tags": ["বেদ", "চিকিৎসা", "আধ্যাত্মিক"]
+  }
+]
