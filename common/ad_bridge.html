@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অপেক্ষা করুন | Ad Bridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; background: #000; color: white; margin: 0; overflow: hidden; }
+        .ad-viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+        .ad-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
+        .controls { position: fixed; top: 20px; right: 20px; z-index: 100; text-align: right; }
+        .btn { background: #fbbf24; color: #000; font-weight: bold; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; }
+        .timer { background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #fbbf24; border-radius: 8px; display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" src="../music.mp3" loop></audio>
+
+    <div class="ad-viewport">
+        <a id="ad-link" href="#" target="_blank">
+            <img id="ad-img" src="" class="ad-img">
+        </a>
+    </div>
+
+    <div class="controls">
+        <button id="skip-btn" onclick="startTimer()" class="btn">SKIP AD & CONTINUE</button>
+        <div id="timer-box" class="timer">অপেক্ষা করুন: <span id="sec">30</span>s</div>
+    </div>
+
+    <script>
+        let ads = [];
+        const urlParams = new URLSearchParams(window.location.search);
+        // সরাসরি লিঙ্কটি পাওয়া যাচ্ছে কি না চেক করুন
+        const targetUrl = urlParams.get('target');
+
+        async function loadAds() {
+            try {
+                const res = await fetch('../ad_data.json');
+                ads = await res.json();
+                if(ads.length > 0) {
+                    showAd();
+                    setInterval(showAd, 5000);
+                }
+            } catch (e) { console.log("Ads failed, but link is: " + targetUrl); }
+        }
+
+        function showAd() {
+            const randomAd = ads[Math.floor(Math.random() * ads.length)];
+            const img = document.getElementById('ad-img');
+            img.src = randomAd.img;
+            document.getElementById('ad-link').href = randomAd.link;
+            img.style.opacity = 1;
+        }
+
+        function startTimer() {
+            document.getElementById('bg-music').play();
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('timer-box').style.display = 'block';
+            
+            let count = 30;
+            const interval = setInterval(() => {
+                count--;
+                document.getElementById('sec').innerText = count;
+                if(count <= 0) {
+                    clearInterval(interval);
+                    // যদি লিঙ্ক থাকে তবে সেখানে যাবে, নাহলে ইনডেক্সে
+                    window.location.href = targetUrl ? targetUrl : '../index.html';
+                }
+            }, 1000);
+        }
+
+        window.onload = loadAds;
+    </script>
+</body>
+</html>
