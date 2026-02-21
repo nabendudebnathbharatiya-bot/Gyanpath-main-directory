@@ -9,7 +9,7 @@
     <style>
         body { font-family: sans-serif; background: #000; color: white; margin: 0; overflow: hidden; }
         .ad-viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-        .ad-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
+        .ad-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease-in-out; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; text-align: right; }
         .btn { background: #fbbf24; color: #000; font-weight: bold; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; transition: 0.3s; }
         .btn:hover { background: #f59e0b; }
@@ -33,16 +33,13 @@
 
     <script>
         let ads = [];
+        let currentAdIndex = 0; // সিরিয়াল মেইনটেইন করার জন্য
         const urlParams = new URLSearchParams(window.location.search);
-        // সরাসরি লিঙ্কটি পাওয়া যাচ্ছে কি না চেক করুন
         const targetUrl = urlParams.get('target');
 
         async function loadAds() {
             try {
-                // ক্যাশ বাস্টিং ট্রিক
                 const cacheBuster = new Date().getTime();
-                
-                // আপনার আগের ad_data.json থেকেই ডেটা লোড হচ্ছে
                 const res = await fetch('../ad_data.json?v=' + cacheBuster);
                 
                 if (!res.ok) throw new Error("Ad file missing or syntax error");
@@ -50,40 +47,55 @@
                 ads = await res.json();
                 
                 if(ads.length > 0) {
+                    // ১. প্রি-লোডিং (Preloading): ব্যাকগ্রাউন্ডে ছবিগুলো আগে থেকেই ডাউনলোড করে রাখা
+                    ads.forEach(ad => {
+                        const preloadedImg = new Image();
+                        preloadedImg.src = ad.img;
+                    });
+
                     showAd();
-                    setInterval(showAd, 5000); // ৫ সেকেন্ড পর পর অ্যাড স্লাইড হবে
+                    setInterval(showAd, 5000); // ৫ সেকেন্ড পর পর চেঞ্জ হবে
                 }
             } catch (e) { 
-                console.error("Ads failed to load, but user can still continue. Error:", e); 
+                console.error("Ads failed to load:", e); 
             }
         }
 
         function showAd() {
             if (ads.length === 0) return;
-            const randomAd = ads[Math.floor(Math.random() * ads.length)];
+            
+            // ২. র‍্যান্ডমের বদলে সিরিয়াল অনুযায়ী অ্যাড দেখানো
+            const ad = ads[currentAdIndex];
             const img = document.getElementById('ad-img');
-            img.src = randomAd.img;
-            document.getElementById('ad-link').href = randomAd.link;
-            img.style.opacity = 1;
+            
+            // স্মুথ ট্রানজিশনের জন্য একটু অপাসিটি কমিয়ে আবার বাড়ানো
+            img.style.opacity = 0.5;
+            
+            setTimeout(() => {
+                img.src = ad.img;
+                document.getElementById('ad-link').href = ad.link;
+                img.style.opacity = 1;
+            }, 150); // ছবি চেঞ্জ হওয়ার সময় সামান্য গ্যাপ
+
+            // ইনডেক্স বাড়ানো (যাতে পরের বার পরের অ্যাড আসে)
+            currentAdIndex = (currentAdIndex + 1) % ads.length;
         }
 
         function startTimer() {
-            // অডিও প্লে হওয়ার সময় ব্রাউজার পলিসির কারণে এরর দিলে তা সামলানোর জন্য
             const audio = document.getElementById('bg-music');
             if(audio) {
-                audio.play().catch(e => console.log("Audio play prevented by browser autoplay policy."));
+                audio.play().catch(e => console.log("Audio play prevented."));
             }
 
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('timer-box').style.display = 'block';
             
-            let count = 30; // টাইমার ৩০ সেকেন্ড
+            let count = 30;
             const interval = setInterval(() => {
                 count--;
                 document.getElementById('sec').innerText = count;
                 if(count <= 0) {
                     clearInterval(interval);
-                    // যদি টার্গেট লিঙ্ক থাকে তবে সেখানে যাবে, নাহলে ইনডেক্সে
                     window.location.href = targetUrl ? targetUrl : '../index.html';
                 }
             }, 1000);
