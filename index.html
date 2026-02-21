@@ -148,7 +148,7 @@
                 // প্যারালাল ফেচিং
                 const [t, ad, app] = await Promise.all([
                     fetch('./title.json').then(r => r.json()),
-                    fetch('./ad_data.json').then(r => r.json()),
+                    fetch('./ad-banner.json').then(r => r.json()),
                     fetch('./app_data.json').then(r => r.json())
                 ]);
                 allApps = app; allAds = ad;
