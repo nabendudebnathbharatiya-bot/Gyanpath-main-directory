@@ -144,35 +144,38 @@
         let allApps = []; let allAds = []; let adIdx = 0; let showFavs = false;
 
         async function loadData() {
-            try {
-                // প্যারালাল ফেচিং
-                const [t, ad, app] = await Promise.all([
-                    fetch('./title.json').then(r => r.json()),
-                    fetch('./ad-banner.json').then(r => r.json()),
-                    fetch('./app_data.json').then(r => r.json())
-                ]);
-                allApps = app; allAds = ad;
-                
-                // টাইটেল সেট
-                document.getElementById('main-title').innerText = t.app_name;
-                if(t.logo_url) { 
-                    const logo = document.getElementById('app-logo'); 
-                    logo.src = t.logo_url; 
-                    logo.classList.remove('hidden'); 
-                }
+    try {
+        // ক্যাশ এড়ানোর জন্য বর্তমান সময়ের একটি ইউনিক নম্বর তৈরি করা হলো
+        const cacheBuster = new Date().getTime();
 
-                // থিম চেক
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
-                    document.getElementById('theme-icon').className = 'fa-solid fa-sun';
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    document.getElementById('theme-icon').className = 'fa-solid fa-moon';
-                }
+        // প্যারালাল ফেচিং (ফাইলের নামের শেষে ?v=cacheBuster যুক্ত করা হয়েছে)
+        const [t, ad, app] = await Promise.all([
+            fetch('./title.json?v=' + cacheBuster).then(r => r.json()),
+            fetch('./ad-banner.json?v=' + cacheBuster).then(r => r.json()),
+            fetch('./app_data.json?v=' + cacheBuster).then(r => r.json())
+        ]);
+        allApps = app; allAds = ad;
+        
+        // টাইটেল সেট
+        document.getElementById('main-title').innerText = t.app_name;
+        if(t.logo_url) { 
+            const logo = document.getElementById('app-logo'); 
+            logo.src = t.logo_url; 
+            logo.classList.remove('hidden'); 
+        }
 
-                renderContent(allApps);
-                if(allAds.length > 0) initAdRotate();
-            } catch (e) { console.error("Data Load Error:", e); }
+        // থিম চেক
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-moon';
+        }
+
+        renderContent(allApps);
+        if(allAds.length > 0) initAdRotate();
+    } catch (e) { console.error("Data Load Error:", e); }
         }
 
         function renderContent(data) {
