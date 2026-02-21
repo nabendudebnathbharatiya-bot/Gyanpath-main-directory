@@ -11,8 +11,9 @@
         .ad-viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
         .ad-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.5s; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; text-align: right; }
-        .btn { background: #fbbf24; color: #000; font-weight: bold; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; }
-        .timer { background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #fbbf24; border-radius: 8px; display: none; margin-top: 10px; }
+        .btn { background: #fbbf24; color: #000; font-weight: bold; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; transition: 0.3s; }
+        .btn:hover { background: #f59e0b; }
+        .timer { background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #fbbf24; border-radius: 8px; display: none; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -21,7 +22,7 @@
 
     <div class="ad-viewport">
         <a id="ad-link" href="#" target="_blank">
-            <img id="ad-img" src="" class="ad-img">
+            <img id="ad-img" src="" class="ad-img" alt="Advertisement">
         </a>
     </div>
 
@@ -33,21 +34,32 @@
     <script>
         let ads = [];
         const urlParams = new URLSearchParams(window.location.search);
-        // সরাসরি লিঙ্কটি পাওয়া যাচ্ছে কি না চেক করুন
+        // সরাসরি লিঙ্কটি পাওয়া যাচ্ছে কি না চেক করুন
         const targetUrl = urlParams.get('target');
 
         async function loadAds() {
             try {
-                const res = await fetch('../ad_data.json');
+                // ক্যাশ বাস্টিং ট্রিক
+                const cacheBuster = new Date().getTime();
+                
+                // আপনার আগের ad_data.json থেকেই ডেটা লোড হচ্ছে
+                const res = await fetch('../ad_data.json?v=' + cacheBuster);
+                
+                if (!res.ok) throw new Error("Ad file missing or syntax error");
+                
                 ads = await res.json();
+                
                 if(ads.length > 0) {
                     showAd();
-                    setInterval(showAd, 5000);
+                    setInterval(showAd, 5000); // ৫ সেকেন্ড পর পর অ্যাড স্লাইড হবে
                 }
-            } catch (e) { console.log("Ads failed, but link is: " + targetUrl); }
+            } catch (e) { 
+                console.error("Ads failed to load, but user can still continue. Error:", e); 
+            }
         }
 
         function showAd() {
+            if (ads.length === 0) return;
             const randomAd = ads[Math.floor(Math.random() * ads.length)];
             const img = document.getElementById('ad-img');
             img.src = randomAd.img;
@@ -56,17 +68,22 @@
         }
 
         function startTimer() {
-            document.getElementById('bg-music').play();
+            // অডিও প্লে হওয়ার সময় ব্রাউজার পলিসির কারণে এরর দিলে তা সামলানোর জন্য
+            const audio = document.getElementById('bg-music');
+            if(audio) {
+                audio.play().catch(e => console.log("Audio play prevented by browser autoplay policy."));
+            }
+
             document.getElementById('skip-btn').style.display = 'none';
             document.getElementById('timer-box').style.display = 'block';
             
-            let count = 30;
+            let count = 30; // টাইমার ৩০ সেকেন্ড
             const interval = setInterval(() => {
                 count--;
                 document.getElementById('sec').innerText = count;
                 if(count <= 0) {
                     clearInterval(interval);
-                    // যদি লিঙ্ক থাকে তবে সেখানে যাবে, নাহলে ইনডেক্সে
+                    // যদি টার্গেট লিঙ্ক থাকে তবে সেখানে যাবে, নাহলে ইনডেক্সে
                     window.location.href = targetUrl ? targetUrl : '../index.html';
                 }
             }, 1000);
